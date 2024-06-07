@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.db.models import Q
 
 @api_view(['GET', 'POST'])
 @parser_classes([MultiPartParser, FormParser])
@@ -60,3 +61,11 @@ def drink_detail(request, id, format=None):
         elif request.method == 'DELETE':
             drink.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def search_drinks(request):
+    search_query = request.query_params.get('q', '')
+    drinks = Drink.objects.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
+    serializer = DrinkSerializer(drinks, many=True)
+    return Response(serializer.data)
