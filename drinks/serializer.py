@@ -3,10 +3,15 @@ from django.contrib.auth.models import User
 from .models import Drink
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class DrinkSerializer(serializers.ModelSerializer):
+    author_id = serializers.ReadOnlyField(source='author_id.id')
+
     class Meta:
         model = Drink
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'author_id']
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

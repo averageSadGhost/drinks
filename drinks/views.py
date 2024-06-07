@@ -1,36 +1,36 @@
+# views.py
 from .models import Drink
 from .serializer import DrinkSerializer, LoginSerializer, UserSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import permission_classes
-
-
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
 
 @api_view(['GET', 'POST'])
-def drink_list(request, format = None):
+def drink_list(request, format=None):
     if request.method == 'GET':
         drinks = Drink.objects.all()
-        serializer = DrinkSerializer(drinks, many = True)
-        return Response({'drinks': serializer.data}, status= status.HTTP_200_OK)
+        serializer = DrinkSerializer(drinks, many=True)
+        return Response({'drinks': serializer.data}, status=status.HTTP_200_OK)
     
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             return Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
-        serializer = DrinkSerializer(data = request.data)
+        
+        serializer = DrinkSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status = status.HTTP_201_CREATED)
+            serializer.save(author_id=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])        
-def drink_detail(request, id, format = None):
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def drink_detail(request, id, format=None):
     try:
-        drink = Drink.objects.get(pk = id)
+        drink = Drink.objects.get(pk=id)
     except Drink.DoesNotExist:
-        return Response(status = status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
         serializer = DrinkSerializer(drink)
@@ -39,13 +39,14 @@ def drink_detail(request, id, format = None):
     else:
         if not request.user.is_authenticated:
             return Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
         if request.method == 'PUT':
-            serializer = DrinkSerializer(drink, data = request.data)
+            serializer = DrinkSerializer(drink, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status= status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(status= status.HTTP_400_BAD_REQUEST)
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             
         elif request.method == 'PATCH':
             serializer = DrinkSerializer(drink, data=request.data, partial=True)
@@ -57,7 +58,7 @@ def drink_detail(request, id, format = None):
             
         elif request.method == 'DELETE':
             drink.delete()
-            return Response(status= status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
 def register(request):
@@ -72,6 +73,7 @@ def register(request):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 def login(request):
     if request.method == 'POST':
@@ -84,3 +86,10 @@ def login(request):
                 'access': str(refresh.access_token),
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def get_user_by_id(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    serializer = UserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
