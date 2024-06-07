@@ -3,13 +3,27 @@ from django.contrib.auth.models import User
 from .models import Drink
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from .models import Drink
 
 class DrinkSerializer(serializers.ModelSerializer):
-    author_id = serializers.ReadOnlyField(source='author_id.id')
+    author_id = serializers.ReadOnlyField(source='author.id')
+    image = serializers.ImageField(required=False)  # Add this field for image uploading
 
     class Meta:
         model = Drink
-        fields = ['id', 'name', 'description', 'author_id']
+        fields = ['id', 'name', 'description', 'author_id', 'image']  # Include 'image' field in the serializer
+
+    def create(self, validated_data):
+        image_data = validated_data.pop('image', None)  # Extract image data if present
+        drink = Drink.objects.create(**validated_data)  # Create the drink object
+
+        if image_data:  # If image data is provided, save the image
+            drink.image = image_data
+            drink.save()
+
+        return drink
 
 
 class UserSerializer(serializers.ModelSerializer):

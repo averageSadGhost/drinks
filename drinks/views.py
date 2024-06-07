@@ -1,14 +1,16 @@
 from .models import Drink
 from .serializer import DrinkSerializer, LoginSerializer, UserSerializer
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
+from rest_framework.parsers import MultiPartParser, FormParser
 
 @api_view(['GET', 'POST'])
+@parser_classes([MultiPartParser, FormParser])
 def drink_list(request, format=None):
     if request.method == 'GET':
         drinks = Drink.objects.all()
