@@ -1,7 +1,7 @@
-# views.py
 from .models import Drink
 from .serializer import DrinkSerializer, LoginSerializer, UserSerializer
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -39,6 +39,9 @@ def drink_detail(request, id, format=None):
     else:
         if not request.user.is_authenticated:
             return Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if request.user != drink.author_id and not request.user.is_staff:
+            return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
         
         if request.method == 'PUT':
             serializer = DrinkSerializer(drink, data=request.data)
@@ -92,4 +95,15 @@ def login(request):
 def get_user_by_id(request, user_id):
     user = get_object_or_404(User, id=user_id)
     serializer = UserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_users(request):
+    if not request.user.is_staff:
+        return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+    
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
