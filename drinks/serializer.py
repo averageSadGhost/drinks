@@ -8,18 +8,19 @@ from django.contrib.auth.models import User
 from .models import Drink
 
 class DrinkSerializer(serializers.ModelSerializer):
-    author_id = serializers.ReadOnlyField(source='author.id')
-    image = serializers.ImageField(required=False)  # Add this field for image uploading
+    author_id = serializers.ReadOnlyField(source='author_id.id')  # Update this line
+    image = serializers.ImageField(required=False)
+    vote_count = serializers.IntegerField(read_only=True)  # Include vote count field
 
     class Meta:
         model = Drink
-        fields = ['id', 'name', 'description', 'author_id', 'image']  # Include 'image' field in the serializer
+        fields = ['id', 'name', 'description', 'author_id', 'image', 'vote_count']
 
     def create(self, validated_data):
-        image_data = validated_data.pop('image', None)  # Extract image data if present
-        drink = Drink.objects.create(**validated_data)  # Create the drink object
+        image_data = validated_data.pop('image', None)
+        drink = Drink.objects.create(**validated_data)
 
-        if image_data:  # If image data is provided, save the image
+        if image_data:
             drink.image = image_data
             drink.save()
 
