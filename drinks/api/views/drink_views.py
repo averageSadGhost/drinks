@@ -6,8 +6,11 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
 @api_view(['GET', 'POST'])
-@parser_classes([MultiPartParser, FormParser])
 def drink_list(request, format=None):
     if request.method == 'GET':
         drinks = Drink.objects.all()
@@ -23,6 +26,7 @@ def drink_list(request, format=None):
             serializer.save(author_id=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 def drink_detail(request, id, format=None):

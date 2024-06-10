@@ -60,6 +60,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Drink.objects.filter(name='New Drink').exists())
 
+
     def test_create_drink_as_unauthenticated_user(self):
         url = reverse('drink_list')
         data = {'name': 'New Drink', 'description': 'New Description'}
